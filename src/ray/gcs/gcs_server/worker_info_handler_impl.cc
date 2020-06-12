@@ -48,9 +48,12 @@ void DefaultWorkerInfoHandler::HandleReportWorkerFailure(
 void DefaultWorkerInfoHandler::HandleRegisterWorker(
     const RegisterWorkerRequest &request, RegisterWorkerReply *reply,
     SendReplyCallback send_reply_callback) {
-  auto worker_type = request.worker_type();
-  auto worker_id = WorkerID::FromBinary(request.worker_id());
-  auto worker_info = MapFromProtobuf(request.worker_info());
+  const auto worker_id = WorkerID::FromBinary(request.worker_id());
+  auto register_worker_data = std::make_shared<RegisterWorkerData>();
+  register_worker_data->set_worker_id(request.worker_id());
+  register_worker_data->set_worker_type(request.worker_type());
+  register_worker_data->mutable_worker_info()->insert(request.worker_info().begin(),
+                                                      request.worker_info().end());
 
   auto on_done = [worker_id, reply, send_reply_callback](const Status &status) {
     if (!status.ok()) {
@@ -61,8 +64,9 @@ void DefaultWorkerInfoHandler::HandleRegisterWorker(
     GCS_RPC_SEND_REPLY(send_reply_callback, reply, Status::OK());
   };
 
-  Status status = gcs_client_.Workers().AsyncRegisterWorker(worker_type, worker_id,
-                                                            worker_info, on_done);
+  Status status = gcs_table_storage_->RegisterWorkerTable().Put(
+      worker_id, *register_worker_data, on_done);
+
   if (!status.ok()) {
     on_done(status);
   }

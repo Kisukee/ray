@@ -42,7 +42,8 @@ enum TablePrefix {
   NODE_RESOURCE = 17;
   DIRECT_ACTOR = 18;
   WORKER_FAILURE = 19;
-  TABLE_PREFIX_MAX = 20;
+  REGISTER_WORKER = 20;
+  TABLE_PREFIX_MAX = 21;
 }
 
 // The channel that Add operations to the Table should be published on, if any.
@@ -304,6 +305,15 @@ message WorkerFailureData {
   int64 timestamp = 3;
   // Is intentional disconnect
   bool intentional_disconnect = 4;
+}
+
+message RegisterWorkerData {
+  /// The type of the worker.
+  WorkerType worker_type = 1;
+  /// The ID of the worker.
+  bytes worker_id = 2;
+  /// The information of the worker in a dictionary.
+  map<string, bytes> worker_info = 3;
 }
 
 message ResourceMap {

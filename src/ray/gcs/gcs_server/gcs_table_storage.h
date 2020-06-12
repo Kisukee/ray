@@ -35,6 +35,7 @@ using rpc::JobTableData;
 using rpc::ObjectTableData;
 using rpc::ObjectTableDataList;
 using rpc::ProfileTableData;
+using rpc::RegisterWorkerData;
 using rpc::ResourceMap;
 using rpc::ResourceTableData;
 using rpc::TaskLeaseData;
@@ -274,6 +275,14 @@ class GcsWorkerFailureTable : public GcsTable<WorkerID, WorkerFailureData> {
   }
 };
 
+class GcsRegisterWorkerTable : public GcsTable<WorkerID, RegisterWorkerData> {
+ public:
+  explicit GcsRegisterWorkerTable(std::shared_ptr<StoreClient> &store_client)
+      : GcsTable(store_client) {
+    table_name_ = TablePrefix_Name(TablePrefix::REGISTER_WORKER);
+  }
+};
+
 /// \class GcsTableStorage
 ///
 /// This class is not meant to be used directly. All gcs table storage classes should
@@ -355,6 +364,11 @@ class GcsTableStorage {
     return *worker_failure_table_;
   }
 
+  GcsRegisterWorkerTable &RegisterWorkerTable() {
+    RAY_CHECK(register_worker_table_ != nullptr);
+    return *register_worker_table_;
+  }
+
  protected:
   std::shared_ptr<StoreClient> store_client_;
   std::unique_ptr<GcsJobTable> job_table_;
@@ -372,6 +386,7 @@ class GcsTableStorage {
   std::unique_ptr<GcsErrorInfoTable> error_info_table_;
   std::unique_ptr<GcsProfileTable> profile_table_;
   std::unique_ptr<GcsWorkerFailureTable> worker_failure_table_;
+  std::unique_ptr<GcsRegisterWorkerTable> register_worker_table_;
 };
 
 /// \class RedisGcsTableStorage
@@ -396,6 +411,7 @@ class RedisGcsTableStorage : public GcsTableStorage {
     error_info_table_.reset(new GcsErrorInfoTable(store_client_));
     profile_table_.reset(new GcsProfileTable(store_client_));
     worker_failure_table_.reset(new GcsWorkerFailureTable(store_client_));
+    register_worker_table_.reset(new GcsRegisterWorkerTable(store_client_));
   }
 };
 
@@ -421,6 +437,7 @@ class InMemoryGcsTableStorage : public GcsTableStorage {
     error_info_table_.reset(new GcsErrorInfoTable(store_client_));
     profile_table_.reset(new GcsProfileTable(store_client_));
     worker_failure_table_.reset(new GcsWorkerFailureTable(store_client_));
+    register_worker_table_.reset(new GcsRegisterWorkerTable(store_client_));
   }
 };
 
